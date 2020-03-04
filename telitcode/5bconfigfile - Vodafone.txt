@@ -1,0 +1,32 @@
+VODAFONE,           Carrier Name
+Y,                  RMS Activation
+1,                  Connection Method
+www,                APN,
++918861004997,      SMS short code 
+sH3EA36AcGt7JmS8,   MQTT Password
+182.50.155.50:1884, MQTT URL
+60,                 MQTT Heartbeat seconds
+60,                 Performance Interval minutes
+1440,               Location Interval minutes
+TCA2.1A,            Telit Client App Version
+FTP:X:FF,           FTP download status and MSG ID 
+182.50.155.50,      Log FTP URL
+/paultest/,         Log FTP path
+connector,          Log FTP userID
+Aseema@#12,         Log FTP password 
+012015,             Log start (MMDDHH)
+012016,             Log stop  (MMDDHH)
+182.50.155.50,      Software FTP URL
+/paultest/,         Software FTP path
+connector,          Software FTP userID
+Aseema@#12,         Software FTP password 
+0,                  Unused_1
+0,                  Unused_2
+0,                  Unused_3
+0,                  Unused_4
+0,                  Unused_5
+0,                  Unused_6
+0,                  Unused_7
+0,                  Unused_8
+0,                  Unused_9
+0,                  Unused_10

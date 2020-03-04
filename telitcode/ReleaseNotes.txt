@@ -1,0 +1,747 @@
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//  08/31/17 Release of Telit Client Application Software TCA_2.6E  //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+Atlas 4.2A
+
+Description:
+============
+
+-Device will send all the three boot-up messages along with performance data
+ only when the device is activated and when the firmware is upgraded by FTP.
+
+-On every boot-up if it is registered it will send a unsolicited message 
+with 0E08 command. If device is not-registered it will send 0E03 with location details.
+
+-Added 0E03(part-3) message in the message queue.
+-Added code to resolve the location parsing error.
+
+-Deleted StackTrace.h and update_cloud_user_method.h and update_cloud_user_method.c
+as it is already mentioned in TCA_2.4A (release notes).
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//  07/17/17 Release of Telit Client Application Software TCA_2.6A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+Atlas 4.0A
+
+Description:
+============
+
+This release is a partial merge with Indian code v2.5B with MQTT changes
+and bug fixes.   This release was not tested over the air due to a lack
+of a working SIM card.  Thus, there could be unexpected bugs and issues.
+
+- New MQTT code from India that includes a re-try algorithm for making
+PDP connections and connecting to the MQTT server.
+
+- Added 4 new items to the config file.  These are separate FTP server
+info fields for software downloads.  In the future, the FTP servers for
+Logging and software download could be separate.   New fields include
+URL, path, userID, and password.
+
+- Fixed a crash/reset bug found in version 2.5.   The bug was race condition
+between the timing of the alarm monitor and power monitor.   The power
+monitor uses an AT command for an A/D conversion.   Under certain conditions,
+the main control loop could get stuck forever waiting for a reply, thus
+the watchdog timer would go off and reset the TCA.  The timing method of the 
+alarm monitor was changed.
+
+- Changed the return codes for the Read_LED_Status() function.   Added all 
+possible codes/states so that the function always returns something.  This
+was causing problems with the period performance message.  The new codes 
+are:
+
+0 => 1 Amber LED lit
+1 => 1 Green LED lit
+2 => 2 Green LEDs lit
+3 => 3 Green LEDs lit
+4 => Bouncing Ball state (NE is booting or tuning)
+5 => Fault, Red LED Blink code 1 (Cloud Disable)
+6 => Fault, Red LED Blink code 2 (RF Stability)
+7 => Fault, Red LED Blink code 3 (No GSM Signal)
+8 => Fault, Red LED Blink code 4 (Temperature)
+9 => Fault, Red LED Blink code 5 (Module Failure, HW, SW, or No SIM)
+0xFF => invalid state of LEDs
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//  06/13/17 Release of Telit Client Application Software TCA_2.5A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+Atlas 4.0 (pre-release)
+
+Description:
+============
+
+- Added dual band support for the new Titan daul band NE.  The TCA
+auto detects the connected NE (either Atlas or Titan).  Changed the
+data in the Performance message to reflect dual band support and
+clean-up.
+
+- Added a new "tunneling" reverse command packet support.  A tunneling
+cmd_pkt is a packet that originates from an external tool connected to
+the NE's USB, and ends at the TCA.  Future software tools could be used
+for manufacturing or installation purposes.   These packets tunnel 
+through the NE (unchanged and unprocessed by the NE).  So, a future
+tool can talk directly to the TCA via the NE.  These packets have the 
+command IDs range of 0xF700-0xF7FF.   Altas code 4.0 is required.
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//  04/12/17 Release of Telit Client Application Software TCA_2.4A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+Atlas 3.6A
+
+Description:
+============
+
+- This version has a newer MQTT internal API for task 6.  This API
+has less cross dependencies to other areas of the code.  Move MQTT
+timers, initialization code, and state machines to paho_task.c
+
+- Removed files no longer in use for this build: 
+  update_cloud_user_method.h/update_cloud_user_method.c
+  MQTTFormat.h/MQTTFormat.c and StackTrace.h/StackTrace.c
+
+- For debug messages sent to the NE from the TCA, the TCA no longer
+checks for a proper response message.   The NE code will be changed
+to no longer sent a response.   A response in this case is not needed,
+and there are too many response timeouts waiting for responses.  
+Sometimes, the NE got busy with IRQs, and couldn't send a response
+fast enough.  cmd_pkt => CMD_PKT_SEND_DEBUG_MSG = 0x100A
+
+- Added feature to notify the NE is GSM service is lost or never 
+acquired after boot-up.  But, there is a 60 minute time out that
+must occur first, before the NE is notified of lost service.  When
+sevice is declared lost, the NE will then disable with blink code 3, 
+and will wait in that state until GSM service is acquired.
+
+- Added the Module's GSM RSSI to the periodic performance message.
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//  03/24/17 Release of Telit Client Application Software TCA_2.3A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+Atlas 3.6A
+
+Description:
+============
+
+- Added a config file backup maintenance system.  This code creates
+and periodically maintains a backup of the config file.  If the
+config file ever becomes corrupted and unusable, this routine will
+restore the config file from the backup.
+
+- Added an init failure reason for the initialization functions.  The
+software may or may not continue normal operations based on the type
+of failure.   If the software is not capable of continuing, it runs
+a fatal error function that sits in an infinate loop pinging the NE
+every 5 seconds.  We want the AppZone to never "finish" in this case.
+
+- Added LED 1&2 blink capabilities.  LED1 goes ON during initialization
+then off after init passes.  LED2 blinks on/off every seconds for 
+normal operation, every 2 seconds for fatal errors.  This is compatable
+with version 2 hardware of the RMM board.
+
+- Changed the behavior of the shutdown code if 12 volts is lost.  Now,
+if 12V is lost, the code will wait 10-15 seconds for it to return.
+If the 12V doesn't return, then shutdown procedures will start.  This
+allows small power glitches to not reset the Telit.   A new version
+of firmware for the PIC processor on the RMM board is needed, and
+version 3.7 for the Atlas.
+
+- Added a psuedo-random delay at start-up and power down is added to
+prevent too many messages reaching the RMS at the exact same time
+during power failures and restoring power.  The delay is hashed from 
+the IMEI.
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//  02/24/17 Release of Telit Client Application Software TCA_2.2A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+Atlas 3.6A
+
+Description:
+============
+
+- This is the first official release with merged code from India that
+contains a full MQTT client and MQTT message processing using the SMS
+core message format and functions.  
+
+- Added OS locks to read and write functions for the config file to
+prevent multi-task access collisions.  Also, when a update write to
+one item within the config file is performed, the associated
+globals.module.xxx string varibale is automatically updated too.
+
+- Added and renamed some OTA commands to start supporting dual band
+operations.  Note, this release does not support a dual band NE yet.
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//  02/17/17 Release of Telit Client Application Software TCA_2.1B               //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+Atlas 3.6A
+
+Description:
+============
+1. fs_file.c reverted to TCA2.1A - Removed backing up config file.
+2. Removed unwanted update of Config file in registration manager, for 
+   "ftp_update_config_Msgid("X","FF")
+3. Removed checking NE status during enable/disable, because repeated request 
+of enable/disable is handled by RMS.
+4. Added Message queue while publishing data in send_MO_MSG function.
+5. Reset module is changed to Reset module after x seconds (added timer) to handle 
+resetting after Short Code update and Deactivate NE.
+6. Corrected typo in size of memory allocated while pushing data During MQTT (client.c)
+
+////////////////////////////////////////////////////////////////////////////
+//                                                                        //
+//  02/10/17 Release of Telit Client Application Software TCA_2.1A_Mqtt   //
+//                                                                        //
+////////////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+Atlas 3.6A
+
+Description:
+============
+
+- Added MQTT Code,changes made to command packet (cmd_pkt.c) file.
+1. Added TCA2.0 ReadCmdPacket and WriteCmdPacket functions.
+With TCA2.1 ReadCmdPacket and WriteCmdPacket functions we are unable 
+to read the NE data (response timeout from NE with RSP_NE_COMM_ERROR) 
+for first time when the command is published then its found often. 
+Hence tested the same code with TCA2.0 read/write functions and its working fine.
+2.Since we have not changed the process of  "ReadCmdPacket_payload" function 
+in new cmd_pkt change , the RSP_NE_COMM_ERROR issue  while RD_NE_CAL_ITEM is not solved.
+3.With this new change of cmd_pkt where disable of callback function "uart_read_cb" done 
+in function "Init_uart" we have an issue in  read of config file item through hyperterm (rmm05?) .
+4.At cmd_pkt.c use #define TCA20A_CMD_PKT which is integrated with TCA2.0 read/write functions.
+5.At cmd_pkt.c use #define TCA21A_CMD_PKT which is integrated with TCA2.1A read/write functions.
+Sends Response to RMS based on connection method either  MQTT or SMS.
+
+-Added code to store the received Msgid  from RMS for 'software upgrade using FTP' and status of 
+upgrade in config file. This Msgid is used to respond back for all the related messages.
+Upon Bootup based on status of upgrade responding to RMS whether it is success or failure.
+Added Epoch time for  unsolicited messages.
+Implemented new messages for:
+ 1. Deactivate NE
+ 2. Ping NE
+ 3. Read performance data including Epoch time
+Optimized some part of the FTP code by reducing number of tasks created for the whole process.
+Enhanced the error codes sent from NE to RMS by combining the common errors and those related to FTP.
+Added condition to check the current status of NE (Activated, enabled or disabled) before processing 
+the received commands.
+Added Code to resolve  Configfile Corruption by using a duplicate ConfigFile as backup before every 
+update to use when file is corrupted.
+Changed location read from before activation to when activated.
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//  01/26/17 Release of Telit Client Application Software TCA_2.1A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+Atlas 3.6A
+
+
+Description:
+============
+
+- Added remote BTL logging via RMS commands.  This feature allows the
+RMS to set a start and time time/date of the log with auto and manual 
+FTP upload of the log file to a FTP server.  BTL logging are coded
+log messages from the NE, passed up to the Telit, stored in a buffer,
+than written to a log file on the file system, then FTP'd up to a 
+server when finish.   The log messages are coded comma spearated values
+designed to be read into an excel spreadsheet and analyzed by RF
+engineers.  Two new files were added to the build: log.c & log.h
+
+- Many significant changes made to command packet interface for support
+OTA logging.  Before, the NE could not send an unsolicited cmd_pkt
+to the telit, only the telit could send a cmd_pkt and the NE could
+respond.   In this release, added a receive function with a circular
+buffer for cmd_pkts.   Now, the NE can initiate sending cmd_pkts to
+the telit (and the telit may or may not respond).   This is now called
+a reverse command packet (because the flow is reversed).   The original
+command packet interface is unchanged and fully supported.   Also,
+the data payload was increase from 21 to 50, thus you must Atlas code
+3.6A with this release.
+
+- Added several new item to the config file.  New items include an
+FTP state string used for TCA upgrades, upload FTP server information
+used for OTA logging, and start and stop time/date for OTA logging.
+
+- Added a fix from Telit for MO SMS special character bug.  All special
+characters now work accept "@".
+
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//  11/01/16 Release of Telit Client Application Software TCA_2.0A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7 (beta 2)
+Tested with Telit Firmware 13.00.009-B002
+
+Description:
+============
+- Added 1 new Read Command: 0x0B11: Read UL & DL Tx Power
+
+- Added a fix from Telit for the SMS special character bug.  This fix
+is only for MT SMS only (MO SMS is still not working for special chars).
+In order to incorporate this fix, must use GE-910 firmware 13.00.009-B002
+and compile with the newer version of ADE 1.0.7 (beta 2).  This "newer"
+version of ADE 1.0.7 has updated libraries.   Also, included in the
+build are the file sms_utils.c and sms_utils.h.  This file contains
+a functions and tables used to translate special charaters, using
+the function call FromRAWToASCII().  Now, the true FTP password for 
+our test server can be sent OTA.
+
+- Made significant changes to the FTP TCA download functions and tasks.
+MAde the FTP it's own task (task 5) on boot-up.  When a request for
+FTP is made via SMS, all data is forwarded to task 5 via malloc'ed
+memory, then cleared by task5 when done.   Added several new SMS status
+response messages during the SMS download, so the RMS can monitor
+FTP events as they happen.  Added code to verify +12 volts is present
+before FTP can take place (we cannot be running on batteries).
+
+- Change MT SMS parsing code so we throw away and do not process any
+MT SMS that does not match the IMEI or the length is too small.  This
+prevents spam SMS from being processed.
+
+
+
+ 
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//  10/07/16 Release of Telit Client Application Software TCA_1.9A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7
+Tested with Telit Firmware 13.00.009
+
+Description:
+============
+Added 1 new Read Command:
+- 0x0B10: Read NE Cal Item
+
+Added 1 new Write Command:
+- 0x0D0E: Write NE Cal Item
+
+Merged in code updated from India for FTP.   FTP will not allow
+2 sessions to run concurrently.   FTP will now allow a password
+to be sent and used OTA instead of hardcoded.  The downloaded
+file is now checked for a CRC check using MD5.  FTP now uses
+the real file name for the Client App executible, 5bclientapp.bin.
+
+Reply SMS will try twice to send a MO SMS response in case the
+first attempt fails.  If a MT SMS does not match the IMEI for
+the first 15 characters, then the message is thrown out as spam
+and no notification is made to the RMS.  This is an anti-spam
+measure for all MT SMS.
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//   9/29/16 Release of Telit Client Application Software TCA_1.8A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7
+Tested with Telit Firmware 13.00.009
+
+Description:
+============
+Added 3 new unsolicited messages:
+- 0x0E04: FTP response information
+- 0x0E05: FTP version information
+- 0x0E06: Periodic Location data
+
+Added 1 new Command:
+- 0x0D0D: Set Location interval
+
+Added a new periodic location reporting timer.  The interval can
+be updated OTA and is saved in the config file.
+
+Added 2 new items to the 5bconfigfile.txt file: Location interval in
+minutes, and TCA software version string.  Also, expanded the unused
+items to 12 unused items for future use.
+
+This is the first version of the TCA that support remote upgrade of the
+TCA app via FTP.  It was tested in India only.  Changed return type of 
+ftp_start() function from int to response_t so that proper error codes 
+can be return via SMS if something goes wrong.  The TCA will send an
+immediate success upon arrival of an start FTP command, and will follow
+up with another unsolocited message indicating success or failure.
+
+Added code on boot-up to test if any left-over SMS are present within
+the SIM card.  If any are present, they are deleted off.
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//   9/19/16 Release of Telit Client Application Software TCA_1.7A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7
+Tested with Telit Firmware 13.00.009
+
+Description:
+============
+
+This TCA moves closer to a engineering demo release.  Added the
+following new SMS messages:
+
+- 0x0B0E: Read Location via Telit's location services
+- 0x0B0F: Read individual item from the config file
+- 0x0C09: Reset NE (and usually module)
+- 0x0D00: Reset Module only
+- 0x0D03: Write Perf Interval Message period in minutes
+- 0x0D04: Write SMS short code to config file
+- 0x0D06: Write APN to config file
+- 0x0D07: Write MQTT server URL to config file
+- 0x0D0C: Write individual item to the config file
+
+This includes two new messages to read or write any individual
+items within the 5bconfigfile.txt file.
+
+Added Extended Alarm codes.  These codes are an extension of the
+existing alarm codes from the NE.  The difference is these alarm
+conditions originate on the Telit module itself.  To prevent any
+possible alarm code conflicts, the extended alarm codes start at
+100.  The extended alarm codes are reported to the RMS via the
+usual unsolicited SMS with reply ID of 0x0F indicating an alarm.
+Only 2 new extended alarms are defined (but this could increase
+in the future):
+100 -> Loss of 12 volts power
+101 -> Loss of serial communication between Telit and NE.
+
+Added code to monitor external the 12v power line.  If power
+is lost, the RMS is notified once.   The monitor code sends
+a "AT+ADC=1,2" every 5 seconds.  
+
+Added UL Activity Detection state ("1" or "0") to the Performance
+Message.  1 = Antenna on, 0 = Antenna off.
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//   9/19/16 Release of Telit Client Application Software TCA_1.6A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+Build Info:
+============
+GE-910-QUAD
+Built with Telit ADE 1.0.7
+Tested with Telit Firmware 13.00.009
+
+Description:
+============
+
+First, TCA release 1.5 was skipped, because there was an existing
+1.5 release in India.  Thus, to limit any confusion, we jumpeed to 
+v1.6A
+
+This release is a merge of an internal India version with many bug
+fixes, code changes, and other code compliance changes.  This version
+has the following new features:
+
+- The TCA executable bin has been renamed to 5bclientapp.bin.  This
+was done so that file length is 16 characters or less.  This is 
+required of the Telit File System App used to download files to
+the virtual file system of the module.  This is a stupid limitation,
+but we have to live with it.
+
+- A separate config text file that stores various information, so
+that it acts like a NV Ram.   This file is called 5bcfgfile.txt
+and needs to be placed within the /MOD directory next to the 
+TCA executable bin file.  Use the Telit File System App for
+Windows to upload.
+
+- Support RMS Activation.  Before the TCA ever communicates with the
+RMS, it is in RSM activation state No, or "N" within the 5bcfgfile.txt
+file.   After an Activate command is sent from the RMS, the whole
+NE will start working and the RMS activate state is changed in the 
+5bcfgfile.txt file to "Y" or Yes.  This prevent the NE from being
+used until it has established basic communication with the RMS server.
+
+- There are now 3 new types of boot-up unsolicited messages that can be 
+sent out depending on the state of the NE.  These messages are sent after 
+cell service is acquired.  Also, there is a periodic performance message 
+that is sent on a settable-minute timer (and stored in 5bcfgfile.txt).
+
+- Support Telit based location services ahve been added to the build.
+New, separate commands to request a fix need to be added.
+
+- The beginnings of FTP download support have been added.  This code
+is under test, and not fully functional yet.
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//   8/30/16 Release of Telit Client Application Software TCA_1.4A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+
+Description:
+============
+Built with Telit ADE 1.0.7
+Telit Firmware 13.00.009
+
+New Features and Bugs fixed:
+============================
+
+- Added many more SMS read functions, Including
+RD_STATUS           0x0B00
+
+RD_UL_DL_CHANNEL    0x0B01
+RD_UL_DL_GAIN       0x0B02
+
+RD_UL_DL_RSSI       0x0B03
+
+RD_ALARM_STATE      0x0B05
+
+RD_ACTIVITY_DETECT  0x0B06
+
+RD_LED_STATUS       0x0B07
+
+RD_MODULE_INFO      0x0B0A
+
+RD_PHONE_NUMBER     0x0B0D
+
+- As part of these new SMS read functions, there are new read 
+functions added to cloud_user_method.c that can be used by SMS
+or MQTT.
+
+- Added the unsolicited command Periodic Performance data, but
+no code is calling it yet.
+
+- Added support within the CMD_PKT interface to issue a command
+to trigger a graceful reset of the Telit module need for OTA
+software updates.
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//   8/28/16 Release of Telit Client Application Software TCA_1.3A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+
+Description:
+============
+   This beta release adds new features from the v1.2A release.
+
+Built with Telit ADE 1.0.7
+Telit Firmware 13.00.008-B008
+
+New Features and Bugs fixed:
+============================
+
+- Fixed the problem reading MT SMS out of the SIM card.  The delete
+SMS feature does not work in San Diego, but was reported working fine
+in India.
+
+- Added Support for Alarm monitoring and reporting of the NE.  The
+TCA code polls the NE every 3 seconds for any new Alarms, and sends
+an unsolicited SMS with the command code 0x0F00 with the Alarm code,
+aka blink code.  If the Alarm clears, the no alarm code of 0x00 is
+also sent.  If cell coverage is not available, the Alarm will be
+held until service is restored, and sent later.
+
+- This version of TCA is designed to work with Atlas NE code AT_3.2B.
+The new Atlas code now supports a watchdog timer that monitors the
+health of the Telit module.  The timeout is 60 seconds.  If the NE
+does not receive a serial cmd_pkt from the telit after 60 sec, it
+will reset the telit.  The new Alarm monitoring algorithm satisfies
+this requirement.
+
+- Cleaned-up the cmd_pkt write function.  Added the ability to forward
+error codes from the NE, all the way to the RSM for any read or write
+that fails in some fashion.  For example, read failed, parameter out of
+range, etc.   Before, these errors were just considered a communication
+error on the serial link.  Now, the real error can be reported.
+
+- On boot-up, the App reads the Phone number of the SIM via the
+AT#cnum command.
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//   8/23/16 Release of Telit Client Application Software TCA_1.2A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+
+Description:
+============
+   This is a beta release of the Telit Client App.  It supports more
+SMS functions, but because of SIM card issues, it was not tested in
+San Diego completely.  This release is intended to test SMS in India
+on Vodafone.  This release does not compile.  It has intentional
+#error messages in the code, that Indian Engineers will have to 
+correct before compiling and testing.
+
+Built with Telit ADE 1.0.7
+Telit Firmware 13.00.008-B008
+
+New Features and Bugs fixed:
+============================
+
+- New MT and MO SMS functions that conform to the OTA Messaging document
+v1.5.   MT SMS functionality is untested.
+
+Known Issues and Bugs:
+======================
+
+- MT SMS functionality is untested.
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//   8/15/16 Release of Telit Client Application Software TCA_1.1A   //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+
+Description:
+============
+   This is the first real release of Telit Client App.   This version is
+is designed to connect to the 5Barz's India MQTT server and RMS application.
+This version connects to the RMS server for 10 minutes, and then auto-
+matically disconnects.  This release is a building block for a pre-lease
+demo for Vodafone.  It only supports the commands: enable, disable,
+and disconnect (untested).  And, it supports the write: UL channel.
+The only read working and tested is temperature.  This app sends a
+periodic unsolcited message with 10 items every 15 seconds.
+
+TCA_1.1A
+Built with Telit ADE 1.0.7
+Telit Firmware 13.00.008-B008
+
+New Features and Bugs fixed:
+============================
+
+n/a
+
+
+Known Issues and Bugs:
+======================
+
+- The release does not support SMS messaging yet.
+
+- USB debug output is turned off to prevent a known crash of the AppZone.
+
+- This code only works with Telit GE910 with firmware 13.00.008-B008 only.
+
+
+
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+// 7/27/16 Initial Release of Telit Client Application Software v1.0 //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+
+Description:
+============
+   This is the first release of Telit Client App.   This version is
+really just a copy of the demo app completed in Jan. 2016 (but ported 
+to the GE910 GSM module).  This App will connect to the Telit DeviceWise
+Cloud service and update parameters of the NE.   It is designed to
+work with Atlas 3.0G code, but will probably work with Gemini 2.3D
+too.   
+   This app has none of the new features needed to connect to the
+new RMS App or MQTT server the India Team is developing.  We needed to 
+ship units to India and the real Client was not ready yet.
+
+Built with Telit ADE 1.0.7
+Telit Firmware 13.00.008-B008
+
+New Features and Bugs fixed:
+============================
+
+none.
+
+
+Known Issues and Bugs:
+======================
+
+- USB debug output is turned off to prevent a known crash of the AppZone.
+
